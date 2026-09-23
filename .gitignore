@@ -9,3 +9,4 @@ widgets/android/.gradle/
 widgets/android/build/
 widgets/android/app/build/
 widgets/android/local.properties
+.vapid.local
