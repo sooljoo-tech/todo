@@ -1,0 +1,27 @@
+# 매주 월요일 03:00 KST (일요일 18:00 UTC) 전체 데이터 백업
+name: 주간 백업
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: scripts/package-lock.json }
+      - run: npm ci
+        working-directory: scripts
+      - run: node backup.mjs
+        working-directory: scripts
+        env:
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: todo-backup-${{ github.run_id }}
+          path: scripts/backup-out/
+          retention-days: 90

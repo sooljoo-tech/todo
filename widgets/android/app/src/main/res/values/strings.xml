@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">할 일</string>
+    <string name="widget_desc">진행중 프로젝트와 지금 바로 할 일. 줄을 탭하면 완료.</string>
+</resources>

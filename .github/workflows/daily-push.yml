@@ -1,0 +1,31 @@
+# 매시 정각에 실행 → 그 시각(한국시간)을 알림 시각으로 설정한 사용자에게 푸시 발송
+# (사용자마다 알림 시각이 다를 수 있으므로 매시 실행하고 스크립트가 필터링)
+name: 아침 알림 발송
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_hour:
+        description: '테스트: 이 시각(0~23) 구독자에게 즉시 발송'
+        required: false
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: scripts/package-lock.json }
+      - run: npm ci
+        working-directory: scripts
+      - run: node send-daily-push.mjs
+        working-directory: scripts
+        env:
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          APP_URL: https://${{ github.repository_owner }}.github.io/todo/
+          FORCE_HOUR: ${{ inputs.force_hour }}

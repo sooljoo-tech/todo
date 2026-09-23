@@ -1,0 +1,36 @@
+{
+  "name": "todo-desktop",
+  "productName": "할 일",
+  "version": "0.1.0",
+  "description": "항상 위에 떠 있는 작은 할 일 창",
+  "main": "main.js",
+  "author": "sooljoo",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env TODO_URL=http://localhost:5173/todo/ electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.joomidang.todo",
+    "productName": "할 일",
+    "directories": { "output": "release" },
+    "files": ["main.js", "preload.js", "icon.png"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "할 일"
+    },
+    "portable": { "artifactName": "할일-portable.exe" }
+  }
+}

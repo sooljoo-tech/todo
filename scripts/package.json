@@ -1,0 +1,14 @@
+{
+  "name": "todo-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen-vapid": "node gen-vapid.mjs",
+    "push": "node send-daily-push.mjs",
+    "backup": "node backup.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.6",
+    "web-push": "^3.6.7"
+  }
+}
