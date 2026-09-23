@@ -89,14 +89,21 @@ export class CloudStore extends BaseStore {
     this.listenRealtime()
   }
 
-  async refresh() {
+  async refresh(attempt = 0) {
     const [pr, tk, pf] = await Promise.all([
       supabase.from('projects').select('*').order('sort_order').order('created_at'),
       supabase.from('tasks').select('*').order('sort_order').order('created_at'),
       supabase.from('profiles').select('id,name,email'),
     ])
     const err = pr.error || tk.error || pf.error
-    if (err) { this.set({ loading: false, error: err.message }); return }
+    if (err) {
+      // 로그인 직후 서버 간 시계 오차로 나는 일시 오류("JWT issued at future")는 잠시 뒤 재시도
+      if (/issued at future|jwt/i.test(err.message) && attempt < 4) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)))
+        return this.refresh(attempt + 1)
+      }
+      this.set({ loading: false, error: err.message }); return
+    }
     const profiles = Object.fromEntries((pf.data || []).map((p) => [p.id, p]))
     const projects = (pr.data || []).map((p) => ({ ...p, owner_name: profiles[p.owner_id]?.name || '' }))
     const tasks = (tk.data || []).map((t) => ({ ...t, completed_by_name: t.completed_by ? (profiles[t.completed_by]?.name || '') : '' }))
