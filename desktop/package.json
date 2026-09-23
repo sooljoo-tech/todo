@@ -26,11 +26,12 @@
       "icon": "icon.png"
     },
     "nsis": {
+      "artifactName": "todo-setup-${version}.exe",
       "oneClick": true,
       "perMachine": false,
       "createDesktopShortcut": true,
       "shortcutName": "할 일"
     },
-    "portable": { "artifactName": "할일-portable.exe" }
+    "portable": { "artifactName": "todo-portable.exe" }
   }
 }
