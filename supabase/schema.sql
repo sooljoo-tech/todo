@@ -100,9 +100,14 @@ create table if not exists public.push_subscriptions (
   p256dh text not null,
   auth text not null,
   user_agent text,
-  notify_hour integer not null default 8,   -- 알림 시각(한국시간, 0~23)
+  notify_hour integer not null default 8,     -- 알림 시각(한국시간, 0~23)
+  notify_minute integer not null default 0,   -- 알림 분(0~59)
+  last_sent_on date,                          -- 마지막 발송일(한국 날짜). 하루 1회 보장용
   created_at timestamptz not null default now()
 );
+-- 기존 테이블에 열 추가 (재실행 안전)
+alter table public.push_subscriptions add column if not exists notify_minute integer not null default 0;
+alter table public.push_subscriptions add column if not exists last_sent_on date;
 create index if not exists push_user_idx on public.push_subscriptions(user_id);
 
 -- ---------------------------------------------------------------------

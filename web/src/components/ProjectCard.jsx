@@ -56,12 +56,12 @@ export default function ProjectCard({ project, tasks, store, compact, cloud, isO
         </button>
 
         {renaming ? (
-          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} onBlur={commitRename}
+          <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} onBlur={commitRename} onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') { setTitle(project.title); setRenaming(false) } }}
             className="flex-1 font-semibold bg-transparent border-b border-amber-500 outline-none" />
         ) : (
-          <h2 onDoubleClick={() => setRenaming(true)} className={`flex-1 min-w-0 font-semibold truncate ${compact ? 'text-sm' : ''}`}
-            title="두 번 클릭해서 이름 수정">
+          <h2 onClick={() => setRenaming(true)} className={`flex-1 min-w-0 font-semibold truncate cursor-text ${compact ? 'text-sm' : ''}`}
+            title="탭해서 이름 수정">
             {project.title}
           </h2>
         )}

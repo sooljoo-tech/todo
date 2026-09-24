@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured, SUPABASE_URL } from '../lib/supabase'
-import { pushSupported, isIosNotInstalled, getCurrentSubscription, subscribePush, unsubscribePush, updateNotifyHour } from '../lib/push'
+import { pushSupported, isIosNotInstalled, getCurrentSubscription, subscribePush, unsubscribePush, updateNotifyTime, toTimeString, parseTimeString } from '../lib/push'
 import { LocalStore } from '../lib/store'
 
 const APP_URL = `${location.origin}${import.meta.env.BASE_URL}`
@@ -64,7 +64,7 @@ export default function SettingsTab({ user, store, onLogout, onUseLocal, compact
 /* 아침 알림 */
 function NotifySection({ user, flash }) {
   const [sub, setSub] = useState(null)
-  const [hour, setHour] = useState(8)
+  const [time, setTime] = useState('08:00')
   const [busy, setBusy] = useState(false)
   const supported = pushSupported()
 
@@ -73,8 +73,8 @@ function NotifySection({ user, flash }) {
     getCurrentSubscription().then(async (s) => {
       setSub(s)
       if (s) {
-        const { data } = await supabase.from('push_subscriptions').select('notify_hour').eq('endpoint', s.endpoint).maybeSingle()
-        if (data) setHour(data.notify_hour)
+        const { data } = await supabase.from('push_subscriptions').select('notify_hour,notify_minute').eq('endpoint', s.endpoint).maybeSingle()
+        if (data) setTime(toTimeString(data.notify_hour, data.notify_minute || 0))
       }
     })
   }, [supported])
@@ -82,13 +82,20 @@ function NotifySection({ user, flash }) {
   const toggle = async () => {
     setBusy(true)
     try {
+      const { hour, minute } = parseTimeString(time)
       if (sub) { await unsubscribePush(); setSub(null); flash('알림을 해제했습니다') }
-      else { const s = await subscribePush(user.id, hour); setSub(s); flash('매일 아침 알림을 받습니다') }
+      else { const s = await subscribePush(user.id, hour, minute); setSub(s); flash(`매일 ${time}에 알림을 받습니다`) }
     } catch (e) { flash(e.message || '실패') }
     setBusy(false)
   }
 
-  const changeHour = async (h) => { setHour(h); if (sub) { await updateNotifyHour(h); flash(`${h}시로 변경`) } }
+  // 시각 변경은 입력을 마친 뒤(blur 또는 Enter) 저장
+  const commitTime = async () => {
+    if (!sub) return
+    const { hour, minute } = parseTimeString(time)
+    await updateNotifyTime(hour, minute)
+    flash(`${toTimeString(hour, minute)}로 변경`)
+  }
 
   return (
     <Section title="아침 알림 (이 기기)">
@@ -104,12 +111,13 @@ function NotifySection({ user, flash }) {
               <input type="checkbox" checked={Boolean(sub)} onChange={toggle} disabled={busy} className="accent-amber-500 w-4 h-4" />
               <span>매일 오늘 할 일 요약 받기</span>
             </label>
-            <select value={hour} onChange={(e) => changeHour(Number(e.target.value))}
-              className="ml-auto rounded-md bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-2 py-1 text-sm">
-              {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}시</option>)}
-            </select>
+            <input type="time" value={time} step="60"
+              onChange={(e) => setTime(e.target.value || '08:00')}
+              onBlur={commitTime}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur() }}
+              className="ml-auto rounded-md bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-2 py-1 text-sm tabular-nums" />
           </div>
-          <p className="text-xs text-stone-400">기기마다 따로 켜야 합니다. 핸드폰에서 이 화면을 열어 켜 주세요.</p>
+          <p className="text-xs text-stone-400">기기마다 따로 켜야 합니다. 설정 시각 기준 10분 안에 도착합니다.</p>
         </>
       )}
     </Section>
